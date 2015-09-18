@@ -9,18 +9,18 @@
 #    the average of each variable for each activity and each subject.
 
 ## read data from Human Activity Recognition Dataset
-"""
-The dataset includes the following files:
-        =========================================
-                - 'README.txt'
-        - 'features_info.txt': Shows information about the variables used on the feature vector.
-        - 'features.txt': List of all features.
-        - 'activity_labels.txt': Links the class labels with their activity name.
-        - 'train/X_train.txt': Training set.
-        - 'train/y_train.txt': Training labels.
-        - 'test/X_test.txt': Test set.
-        - 'test/y_test.txt': Test labels.
-"""        
+
+##The dataset includes the following files:
+##        =========================================
+##                - 'README.txt'
+##        - 'features_info.txt': Shows information about the variables used on the feature vector.
+#        - 'features.txt': List of all features.
+#        - 'activity_labels.txt': Links the class labels with their activity name.
+#        - 'train/X_train.txt': Training set.
+#        - 'train/y_train.txt': Training labels.
+#        - 'test/X_test.txt': Test set.
+#        - 'test/y_test.txt': Test labels.
+       
 ## assume it is located in the working directory and called HARData.
 ## X_test.txt data is fixed width of 17, 16, 16, 16, .... out to 8977
 ## so, it is 17, rep(16,560), index can be read from features.txt
@@ -31,9 +31,23 @@ The dataset includes the following files:
 ##    sorting
 ## body_acc_x_test.txt is 2049 wide, so 17, rep(16,127)    
 
+##setwd('d:/Coursera_Data_Science/GetCleanAssign/GettingCleaningAssignment')
+
+##### Step 1 #####
+#library(data.table)
+# Read in the column names
+column_names <- read.table('UCI HAR Dataset/features.txt', header = F)
+# Read in the dataset
+colsClass <- c(rep("numeric",561))
+print(length(colsClass))
+##del widths <- c(17, rep(16,560))
+trainX <- read.table('UCI HAR Dataset/train/X_train.txt', sep = "", header = F,
+                   colClasses= colsClass, col.names = column_names[,2])
+trainX <- trainX[,grep("mean()",colnames(trainX))] #this will subset for mean only, need to include std()
 
 
 
 ##### Step 5 #####
 # Write the tidy data to a txt file
-write.table(variable_name_here, file = "tidyData.txt", row.name = FALSE)
+
+#write.table(variable_name_here, file = "tidyData.txt", row.name = FALSE)
