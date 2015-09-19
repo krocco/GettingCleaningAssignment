@@ -1,7 +1,7 @@
 # Goals of this script are:
-# 0. Downloads data (or reads from a local file)
-# 1. Merget the training and the test sets to create one data set
-# 2. Extracts only the measurements on the mean and standard deviation for
+# 0./Downloads data (or reads from a local file)
+# 1./Merges the training and the test sets to create one data set
+# 2./Extracts only the measurements on the mean and standard deviation for
 #    each measurement
 # 3. Uses descriptive activity names to name the activities in the data set
 # 4. Appropriately labels the data set with descriptive variable names
@@ -32,8 +32,9 @@
 ## body_acc_x_test.txt is 2049 wide, so 17, rep(16,127)    
 
 ##setwd('d:/Coursera_Data_Science/GetCleanAssign/GettingCleaningAssignment')
-
-##### Step 1 #####
+library(dplyr)
+library(plyr)
+##### Steps 0 and 2 #####
 #library(data.table)
 # Read in the column names
 column_names <- read.table('UCI HAR Dataset/features.txt', header = F)
@@ -43,9 +44,70 @@ print(length(colsClass))
 ##del widths <- c(17, rep(16,560))
 trainX <- read.table('UCI HAR Dataset/train/X_train.txt', sep = "", header = F,
                    colClasses= colsClass, col.names = column_names[,2])
-trainX <- trainX[,grep("mean()",colnames(trainX))] #this will subset for mean only, need to include std()
+#trainX <- trainX[,grep("mean()",colnames(trainX))] #this will subset for mean only, need to include std()
+
+## convert to data table and select mean and std rows
+trnX <- tbl_df(trainX)
+trnX <- select(trnX, contains(".mean.", ignore.case = F), 
+               contains(".std.", ignore.case = F))
+## free up some memory
+rm("trainX")
+## read in the other data and add in to the data table
+subject_train <- read.table('UCI HAR Dataset/train/subject_train.txt',
+                            header = F, col.names = "Subject")
+subj_trn <- tbl_df(subject_train)
+rm("subject_train")
 
 
+
+labels_train <- read.table('UCI HAR Dataset/train/y_train.txt', header = F,
+                           col.names = "Labels")
+labels_trn <- tbl_df(labels_train)
+rm("labels_train")
+
+activity_labels <- read.table('UCI HAR Dataset/activity_labels.txt', sep = "",
+                              header = F, col.names = c("number", "label"))
+print("train data ok")
+## do the same for test data
+testX <- read.table('UCI HAR Dataset/test/X_test.txt', sep = "", header = F,
+                     colClasses= colsClass, col.names = column_names[,2])
+print("74")
+tstX <- tbl_df(testX)
+tstX <- select(tstX, contains(".mean.", ignore.case = F), 
+               contains(".std.", ignore.case = F))
+rm("testX")
+print("79")
+subject_test <- read.table('UCI HAR Dataset/test/subject_test.txt',
+                            header = F, col.names = "Subject")
+subj_tst <- tbl_df(subject_test)
+rm("subject_test")
+print("84")
+labels_test <- read.table('UCI HAR Dataset/test/y_test.txt', header = F,
+                           col.names = "Labels")
+labels_tst <- tbl_df(labels_test)
+rm("labels_test")
+print("89")
+
+
+##### Step 1 ##### Merge the Dataset
+# Column bind the train data
+train_index <- cbind(subj_trn, labels_trn)
+print("first row bind OK")
+train <- cbind(train_index, trnX)
+print("second row bind ok")
+print(dim(train))
+# Column bind the test data
+test_index <- cbind(subj_tst, labels_tst)
+test <- cbind(test_index, tstX)
+print(dim(test))
+# column bind the test and train
+big_data <- tbl_df(rbind(train,test))
+
+##### Step 2 ##### Extract mean and std dev only
+#small_data <- select(big_data, contains(".mean.", ignore.case = F), 
+#                     contains(".std.", ignore.case = F))
+
+##### Step 3 ##### Descriptive Activity Names
 
 ##### Step 5 #####
 # Write the tidy data to a txt file
