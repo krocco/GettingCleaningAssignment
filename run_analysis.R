@@ -60,10 +60,12 @@ rm("subject_train")
 
 
 
-labels_train <- read.table('UCI HAR Dataset/train/y_train.txt', header = F,
-                           col.names = "Labels")
+labels_train <- as.matrix(read.table('UCI HAR Dataset/train/y_train.txt', header = F,
+                                     col.names = "Labels"))
+labels_train <- as.data.frame(mapvalues(labels_train, from = activity_labels$number,
+                          to = activity_labels$label))
 labels_trn <- tbl_df(labels_train)
-rm("labels_train")
+#rm("labels_train")
 
 activity_labels <- read.table('UCI HAR Dataset/activity_labels.txt', sep = "",
                               header = F, col.names = c("number", "label"))
@@ -82,8 +84,10 @@ subject_test <- read.table('UCI HAR Dataset/test/subject_test.txt',
 subj_tst <- tbl_df(subject_test)
 rm("subject_test")
 print("84")
-labels_test <- read.table('UCI HAR Dataset/test/y_test.txt', header = F,
-                           col.names = "Labels")
+labels_test <- as.matrix(read.table('UCI HAR Dataset/test/y_test.txt', header = F,
+                                    col.names = "Labels"))
+labels_test <- as.data.frame(mapvalues(labels_test, from = activity_labels$number,
+                          to = activity_labels$label))
 labels_tst <- tbl_df(labels_test)
 rm("labels_test")
 print("89")
@@ -108,6 +112,11 @@ big_data <- tbl_df(rbind(train,test))
 #                     contains(".std.", ignore.case = F))
 
 ##### Step 3 ##### Descriptive Activity Names
+big_data$Labels <- activity_labels$label[big_data$Labels]
+
+##### Step 4 ##### Appropriately Label Columns
+
+
 
 ##### Step 5 #####
 # Write the tidy data to a txt file
