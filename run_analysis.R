@@ -112,7 +112,7 @@ big_data <- tbl_df(rbind(train,test))
 #                     contains(".std.", ignore.case = F))
 
 ##### Step 3 ##### Descriptive Activity Names
-big_data$Labels <- activity_labels$label[big_data$Labels]
+#big_data$Labels <- activity_labels$label[big_data$Labels]
 
 ##### Step 4 ##### Appropriately Label Columns
 
