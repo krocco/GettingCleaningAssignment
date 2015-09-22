@@ -31,91 +31,72 @@
 ##    sorting
 ## body.acc.x.test.txt is 2049 wide, so 17, rep(16,127)    
 
-##setwd('d:/Coursera.Data.Science/GetCleanAssign/GettingCleaningAssignment')
+
 library(dplyr)
 
 ##### Steps 0 and 2 #####
+# read in the data AND just take in the mean and stdDev columns
 #library(data.table)
 
 # Read in the column names
 column.names <- read.table('UCI HAR Dataset/features.txt', header = F)
 
-# Read in the dataset
+
+# specify the column classes
 colsClass <- c(rep("numeric",561))
 
-trainX <- read.table('UCI HAR Dataset/train/X_train.txt', sep = "", header = F,
+# Read in the dataset
+X_train <- read.table('UCI HAR Dataset/train/X_train.txt', sep = "", header = F,
                    colClasses= colsClass, col.names = column.names[,2])
 
 ## convert to data table and select mean and std rows
-trnX <- tbl_df(trainX)
+trnX <- tbl_df(X_train)
 trnX <- select(trnX, contains(".mean.", ignore.case = F), 
                contains(".std.", ignore.case = F))
 
 ## free up some memory
-rm("trainX")
+rm("X_train")
 
 ## read in the other data and add in to the data table
-subject.train <- read.table('UCI HAR Dataset/train/subject_train.txt',
-                            header = F, col.names = "Subject")
-subj.trn <- tbl_df(subject.train)
-rm("subject.train")
+subject_train <- read.table('UCI HAR Dataset/train/subject_train.txt',
+                            header = F, col.names = "subject")
 
-labels.train <- as.matrix(read.table('UCI HAR Dataset/train/y_train.txt', header = F,
-                                     col.names = "Labels"))
+y_train <- read.table('UCI HAR Dataset/train/y_train.txt', header = F,
+                                     col.names = "activity")
 
 # read activity labels
 activity.labels <- read.table('UCI HAR Dataset/activity_labels.txt', sep = "",
                               header = F, col.names = c("number", "label"))
 
-labels.train <- as.data.frame(mapvalues(labels.train, from = activity.labels$number,
-                          to = activity.labels$label))
-
-labels.trn <- tbl_df(labels.train)
-#rm("labels.train")
-
-
-
 ## do the same for test data
-testX <- read.table('UCI HAR Dataset/test/X_test.txt', sep = "", header = F,
+X_test <- read.table('UCI HAR Dataset/test/X_test.txt', sep = "", header = F,
                      colClasses= colsClass, col.names = column.names[,2])
 
-tstX <- tbl_df(testX)
+tstX <- tbl_df(X_test)
 tstX <- select(tstX, contains(".mean.", ignore.case = F), 
                contains(".std.", ignore.case = F))
-rm("testX")
+rm("X_test")
 
-subject.test <- read.table('UCI HAR Dataset/test/subject_test.txt',
-                            header = F, col.names = "Subject")
-subj.tst <- tbl_df(subject.test)
-rm("subject.test")
+subject_test <- read.table('UCI HAR Dataset/test/subject_test.txt',
+                            header = F, col.names = "subject")
 
-labels.test <- as.matrix(read.table('UCI HAR Dataset/test/y_test.txt', header = F,
-                                    col.names = "Labels"))
-labels.test <- as.data.frame(mapvalues(labels.test, from = activity.labels$number,
-                          to = activity.labels$label))
-labels.tst <- tbl_df(labels.test)
-rm("labels.test")
+y_test <- read.table('UCI HAR Dataset/test/y_test.txt', header = F,
+                                    col.names = "activity")
 
 ##### Step 1 ##### Merge the Dataset
+# row bind the test and train data as three separate sets
 
-# Column bind the train data
-train.index <- cbind(subj.trn, labels.trn)
-train <- cbind(train.index, trnX)
-
-
-# Column bind the test data
-test.index <- cbind(subj.tst, labels.tst)
-test <- cbind(test.index, tstX)
-
-
-# column bind the test and train
-big_data <- tbl_df(rbind(train,test))
+big_data <- tbl_df(rbind(trnX,tstX))
+big_subject <- tbl_df(rbind(subject_train,subject_test))
+big_labels <- rbind(y_train,y_test)
 
 ##### Step 3 ##### Descriptive Activity Names
 # remove underscores and force to lowercase, then map to the dataset
-activity.labels$label <- tolower(activity.labels$label)
-activity.labels$label <- gsub("_","",activity.labels$label)
-big_data$Labels <- activity.labels$label[big_data$Labels]
+
+activities <- activity.labels$label
+activities <- tolower(activities)
+activities <- gsub("_","",activities)
+big_labels[,1] <- activities[big_labels[,1]]
 
 ##### Step 4 ##### Appropriately Label Columns
 # change t to suffix: -time, f to suffix -frequency, 
@@ -125,12 +106,14 @@ big_data$Labels <- activity.labels$label[big_data$Labels]
 # replace "Acc" with "Acceleration" and "Mag" with "Magnitude"
 # replace "std" with "StdDev" and "mean" with "Mean"
 # remove all dots (.) and any spaces
+
 domainSuffix <- function(x) if(grepl("t",substr(x,1,1))) paste0(x,"-time") else if(grepl("f",substr(x,1,1))) paste(x,"-frequency")
 names(big_data) <- sapply(names(big_data), domainSuffix)
 removePrefix <- function(x) substr(x,2,nchar(x))
 names(big_data) <- sapply(names(big_data), removePrefix)
-names(big_data) <- gsub("BodyBody","Body", names(big_data))
-names(big_data) <- gsub("BodyGyro","Gyro", names(big_data))
+names(big_data) <- gsub("BodyBody","body", names(big_data))
+names(big_data) <- gsub("BodyGyro","gyro", names(big_data))
+names(big_data) <- gsub("Body","body", names(big_data))
 names(big_data) <- gsub("AccJerk", "Jerk", names(big_data))
 names(big_data) <- gsub("Acc", "Acceleration", names(big_data))
 names(big_data) <- gsub("Mag", "Magnitude", names(big_data))
@@ -139,18 +122,19 @@ names(big_data) <- gsub("mean", "Mean", names(big_data))
 names(big_data) <- gsub("\\.","", names(big_data))
 names(big_data) <- gsub(" ", "", names(big_data))
 
-# input Subject and Activity labels directly (this is faster than fixing code)
-names(big_data)[1] <- "subject"
-names(big_data)[2] <- "activity"
+
 
 ##### Step 5 #####
 # create a second, independent tidy data set with the average of each variable
 # for each activity and each subject
 
-result <- big_data %>% group_by(subject, activity) %>% summarize(mean)
+# bind the subject, activity, and mean/stddev information in one big table
+all_data <- tbl_df(cbind(big_subject,big_labels, big_data))
+
+summary_data <- all_data %>% group_by(subject, activity) %>% summarize_each(funs(mean))
 
 
 
 # Write the tidy data to a txt file
 
-#write.table(variable.name.here, file = "tidyData.txt", row.name = FALSE)
+write.table(summary_data, file = "tidyData.txt", row.name = FALSE)
