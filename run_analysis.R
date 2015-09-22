@@ -111,9 +111,8 @@ domainSuffix <- function(x) if(grepl("t",substr(x,1,1))) paste0(x,"-time") else 
 names(big_data) <- sapply(names(big_data), domainSuffix)
 removePrefix <- function(x) substr(x,2,nchar(x))
 names(big_data) <- sapply(names(big_data), removePrefix)
-names(big_data) <- gsub("BodyBody","body", names(big_data))
-names(big_data) <- gsub("BodyGyro","gyro", names(big_data))
-names(big_data) <- gsub("Body","body", names(big_data))
+names(big_data) <- gsub("BodyBody","Body", names(big_data))
+names(big_data) <- gsub("BodyGyro","Gyro", names(big_data))
 names(big_data) <- gsub("AccJerk", "Jerk", names(big_data))
 names(big_data) <- gsub("Acc", "Acceleration", names(big_data))
 names(big_data) <- gsub("Mag", "Magnitude", names(big_data))
@@ -133,6 +132,10 @@ all_data <- tbl_df(cbind(big_subject,big_labels, big_data))
 
 summary_data <- all_data %>% group_by(subject, activity) %>% summarize_each(funs(mean))
 
+# rewrite variable names to be prefixed by "mean"
+meanPrefix <- function(x) paste0("mean",x)
+names(summary_data) <- sapply(names(summary_data), meanPrefix)
+names(summary_data)[c(1,2)] <- c("subject","activity")
 
 
 # Write the tidy data to a txt file
